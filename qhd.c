@@ -1,6 +1,6 @@
 /*  ---------------------------------------------------------------- */
 /*                                                                   */
-/*  Quick Hex Dump version 1.1                                       */
+/*  Quick Hex Dump version 1.1.1                                     */
 /*                                                                   */
 /*  (C) 2022 PQCraft                                                 */
 /*  Licensed under the GNU General Public License version 3.0        */
@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <string.h>
 #include <inttypes.h>
+#include <sys/stat.h>
 
 int gargc;
 char** gargv;
@@ -55,6 +56,16 @@ int main(int argc, char** argv) {
     if (argc > 1) {
         fp = fopen(argv[1], "rb");
         if (!fp) {
+            aperror(argv[1]);
+            return 1;
+        }
+        int fd = fileno(fp);
+        struct stat statinfo;
+        memset(&statinfo, 0, sizeof(statinfo));
+        fstat(fd, &statinfo);
+        if (S_ISDIR(statinfo.st_mode)) {
+            fclose(fp);
+            errno = EISDIR;
             aperror(argv[1]);
             return 1;
         }
