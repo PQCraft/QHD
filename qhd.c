@@ -1,4 +1,4 @@
-/*  ---------------------------------------------------------------- */
+/*-------------------------------------------------------------------*/
 /*                                                                   */
 /*  Quick HexDump                                                    */
 /*                                                                   */
@@ -6,9 +6,9 @@
 /*  Licensed under the GNU General Public License version 3          */
 /*  https://www.gnu.org/licenses/gpl-3.0.txt                         */
 /*                                                                   */
-/*  ---------------------------------------------------------------- */
+/*-------------------------------------------------------------------*/
 
-const char* VER = "2.1.1";
+const char* VER = "2.2";
 
 #ifndef QHD_ASCII
     #define QHD_ASCII  0 // Enable/disable 7-bit ASCII mode by default
@@ -35,6 +35,7 @@ bool opt_showchr = true;
 bool opt_onlyfile = false;
 bool opt_color = false;
 bool opt_ascii = QHD_ASCII;
+bool opt_extascii = false;
 
 void aperror(char* str) {
     fprintf(stderr, "%s: ", argv[0]);
@@ -142,13 +143,14 @@ void puthelp() {
     puts("      --help          Display help text and exit");
     puts("      --version       Display version info and exit");
     puts("  -b, --bar           Display a column bar");
-    puts("  -e, --emptyline     Display an empty line if the file size is zero");
+    puts("  -l, --emptyline     Display an empty line if the file size is zero");
     puts("  -p, --hide-pos      Hide the position column");
     puts("  -h, --hide-hex      Hide the hexadecimal column");
     puts("  -c, --hide-chr      Hide the character column");
     puts("  -C, --color         Enable color escape codes");
     puts("  -a, --ascii         Use only 7-bit ASCII characters");
     puts("  -A, --ext-char      Use UTF-8 characters");
+    puts("  -e, --ext-ascii     Display extended ASCII in the character panel");
     puts("\nENVIRONMENT:");
     puts("    QHD_COLORS: Sets the pallette to use when color escape codes are enabled");
     puts("        Format is key=value separated by colons");
@@ -201,6 +203,8 @@ bool readopt() {
                     opt_ascii = true;
                 } else if (!strcmp(opt, "ext-char")) {
                     opt_ascii = false;
+                } else if (!strcmp(opt, "ext-ascii")) {
+                    opt_extascii = true;
                 } else {
                     errno = EINVAL;
                     aperror(argv[i]);
@@ -211,7 +215,7 @@ bool readopt() {
                 for (int j = 1; (opt = argv[i][j]); ++j) {
                     if (opt == 'b') {
                         opt_bar = true;
-                    } else if (opt == 'e') {
+                    } else if (opt == 'l') {
                         opt_emptyln = true;
                     } else if (opt == 'p') {
                         opt_showpos = false;
@@ -225,6 +229,8 @@ bool readopt() {
                         opt_ascii = true;
                     } else if (opt == 'A') {
                         opt_ascii = false;
+                    } else if (opt == 'e') {
+                        opt_extascii = true;
                     } else {
                         char tmp[3] = {'-', 0, 0};
                         tmp[1] = opt;
@@ -339,6 +345,13 @@ int main(int _argc, char** _argv) {
             for (size_t i = 0; i < 16; ++i) {
                 if (buf[i] >= 32 && buf[i] <= 126) {
                     putchar(buf[i]);
+                } else if (opt_extascii && buf[i] > 127) {
+                    if (opt_ascii) {
+                        putchar(buf[i]);
+                    } else {
+                        putchar((buf[i] >> 6) + 0xC0 + (buf[i] < 0xA1) * 0x04);
+                        putchar((buf[i] & 0x3F) + 0x80);
+                    }
                 } else {
                     setcolor(COLOR_CHRN);
                     if (i < bread) {
