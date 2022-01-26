@@ -8,7 +8,7 @@
 /*                                                                   */
 /*-------------------------------------------------------------------*/
 
-const char* VER = "2.2";
+const char* VER = "2.2.1";
 
 #ifndef QHD_ASCII
     #define QHD_ASCII  0 // Enable/disable 7-bit ASCII mode by default
@@ -72,6 +72,7 @@ enum {
     COLOR_HEXZ,
     COLOR_CHR,
     COLOR_CHRN,
+    COLOR_CHRE,
     COLORCODE_LIST_SIZE,
 };
 
@@ -130,6 +131,8 @@ void parsecolors(char* instr) {
             replacestr(&colorcodes[COLOR_CHR], &list[i][offset]);
         } else if ((offset = eqstrcmp(list[i], "chrn")) > -1) {
             replacestr(&colorcodes[COLOR_CHRN], &list[i][offset]);
+        } else if ((offset = eqstrcmp(list[i], "chre")) > -1) {
+            replacestr(&colorcodes[COLOR_CHRE], &list[i][offset]);
         }
     }
     free(newstr);
@@ -163,6 +166,7 @@ void puthelp() {
     puts("            hexz: Hexadecimal value of zero color");
     puts("            chr:  Character column color");
     puts("            chrn: Non-printable character color");
+    puts("            chre: Extended ASCII character color");
     exit(0);
 }
 
@@ -264,6 +268,7 @@ int main(int _argc, char** _argv) {
         colorcodes[COLOR_HEXZ] = strdup("90");
         colorcodes[COLOR_CHR] = strdup("36");
         colorcodes[COLOR_CHRN] = strdup("90");
+        colorcodes[COLOR_CHRE] = strdup("33");
         parsecolors(getenv("QHD_COLORS"));
     }
     char posfmt[] = " %016lX ";
@@ -346,12 +351,14 @@ int main(int _argc, char** _argv) {
                 if (buf[i] >= 32 && buf[i] <= 126) {
                     putchar(buf[i]);
                 } else if (opt_extascii && buf[i] > 127) {
+                    setcolor(COLOR_CHRE);
                     if (opt_ascii) {
                         putchar(buf[i]);
                     } else {
-                        putchar((buf[i] >> 6) + 0xC0 + (buf[i] < 0xA1) * 0x04);
-                        putchar((buf[i] & 0x3F) + 0x80);
+                        putchar((buf[i] >> 6) | 0xC0 | (buf[i] < 0xA1) * 0x04);
+                        putchar((buf[i] & 0x3F) | 0x80);
                     }
+                    setcolor(COLOR_CHR);
                 } else {
                     setcolor(COLOR_CHRN);
                     if (i < bread) {
