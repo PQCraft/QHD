@@ -8,10 +8,10 @@
 /*                                                                   */
 /*  ---------------------------------------------------------------- */
 
-const char* VER = "2.1";
+const char* VER = "2.1.1";
 
 #ifndef QHD_ASCII
-    #define QHD_ASCII  0 // Enable/disable 7-bit ASCII mode
+    #define QHD_ASCII  0 // Enable/disable 7-bit ASCII mode by default
 #endif
 
 #include <stdio.h>
@@ -34,6 +34,7 @@ bool opt_showhex = true;
 bool opt_showchr = true;
 bool opt_onlyfile = false;
 bool opt_color = false;
+bool opt_ascii = QHD_ASCII;
 
 void aperror(char* str) {
     fprintf(stderr, "%s: ", argv[0]);
@@ -83,11 +84,11 @@ void setcolor(int code) {
 
 void putdiv() {
     setcolor(COLOR_DIV);
-    #if defined(QHD_ASCII) && QHD_ASCII
+    if (opt_ascii) {
         putchar('|');
-    #else
+    } else {
         printf("│");
-    #endif
+    }
 }
 
 void parsecolors(char* instr) {
@@ -135,9 +136,9 @@ void parsecolors(char* instr) {
 }
 
 void puthelp() {
-    printf("Quick HexDump version %s\n\n", VER);
-    printf("USAGE: %s [OPTION]... FILE\n\n", argv[0]);
-    puts("OPTIONS:");
+    printf("Quick HexDump version %s\n", VER);
+    printf("\nUSAGE: %s [OPTION]... FILE\n", argv[0]);
+    puts("\nOPTIONS:");
     puts("      --help          Display help text and exit");
     puts("      --version       Display version info and exit");
     puts("  -b, --bar           Display a column bar");
@@ -145,8 +146,10 @@ void puthelp() {
     puts("  -p, --hide-pos      Hide the position column");
     puts("  -h, --hide-hex      Hide the hexadecimal column");
     puts("  -c, --hide-chr      Hide the character column");
-    puts("  -C, --color         Enable color escape codes\n");
-    puts("ENVIRONMENT:");
+    puts("  -C, --color         Enable color escape codes");
+    puts("  -a, --ascii         Use only 7-bit ASCII characters");
+    puts("  -A, --ext-char      Use UTF-8 characters");
+    puts("\nENVIRONMENT:");
     puts("    QHD_COLORS: Sets the pallette to use when color escape codes are enabled");
     puts("        Format is key=value separated by colons");
     puts("        Values are the middle parts of a color escape code (put between \"\\e[\" and \"m\")");
@@ -194,6 +197,10 @@ bool readopt() {
                     opt_showchr = false;
                 } else if (!strcmp(opt, "color")) {
                     opt_color = true;
+                } else if (!strcmp(opt, "ascii")) {
+                    opt_ascii = true;
+                } else if (!strcmp(opt, "ext-char")) {
+                    opt_ascii = false;
                 } else {
                     errno = EINVAL;
                     aperror(argv[i]);
@@ -214,6 +221,10 @@ bool readopt() {
                         opt_showchr = false;
                     } else if (opt == 'C') {
                         opt_color = true;
+                    } else if (opt == 'a') {
+                        opt_ascii = true;
+                    } else if (opt == 'A') {
+                        opt_ascii = false;
                     } else {
                         char tmp[3] = {'-', 0, 0};
                         tmp[1] = opt;
@@ -331,11 +342,11 @@ int main(int _argc, char** _argv) {
                 } else {
                     setcolor(COLOR_CHRN);
                     if (i < bread) {
-                        #if defined(QHD_ASCII) && QHD_ASCII
+                        if (opt_ascii) {
                             putchar('.');
-                        #else
+                        } else {
                             printf("·");
-                        #endif
+                        }
                     } else {
                         putchar(' ');
                     }
