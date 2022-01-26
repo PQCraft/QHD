@@ -2,7 +2,7 @@
 **A neatly formatted hexdump tool**
 
 ---
-[![image](https://raw.githubusercontent.com/PQCraft/PQCraft/master/Screenshot_20220125_233512.png)](#?)
+[![image](https://raw.githubusercontent.com/PQCraft/PQCraft/master/Screenshot_20220126_124651.png)](#?)
 
 ---
 ### Scripts
