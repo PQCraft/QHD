@@ -8,10 +8,10 @@
 /*                                                                   */
 /*-------------------------------------------------------------------*/
 
-const char* VER = "2.2.1";
+const char* VER = "2.2.1.1";
 
 #ifndef QHD_ASCII
-    #define QHD_ASCII  0 // Enable/disable 7-bit ASCII mode by default
+    #define QHD_ASCII 0 // Enable/disable 7-bit ASCII mode by default
 #endif
 
 #include <stdio.h>
@@ -217,30 +217,41 @@ bool readopt() {
             } else {
                 char opt = 0;
                 for (int j = 1; (opt = argv[i][j]); ++j) {
-                    if (opt == 'b') {
-                        opt_bar = true;
-                    } else if (opt == 'l') {
-                        opt_emptyln = true;
-                    } else if (opt == 'p') {
-                        opt_showpos = false;
-                    } else if (opt == 'h') {
-                        opt_showhex = false;
-                    } else if (opt == 'c') {
-                        opt_showchr = false;
-                    } else if (opt == 'C') {
-                        opt_color = true;
-                    } else if (opt == 'a') {
-                        opt_ascii = true;
-                    } else if (opt == 'A') {
-                        opt_ascii = false;
-                    } else if (opt == 'e') {
-                        opt_extascii = true;
-                    } else {
-                        char tmp[3] = {'-', 0, 0};
-                        tmp[1] = opt;
-                        errno = EINVAL;
-                        aperror(tmp);
-                        return false;
+                    switch (opt) {
+                        case 'b':;
+                            opt_bar = true;
+                            break;
+                        case 'l':;
+                            opt_emptyln = true;
+                            break;
+                        case 'p':;
+                            opt_showpos = false;
+                            break;
+                        case 'h':;
+                            opt_showhex = false;
+                            break;
+                        case 'c':;
+                            opt_showchr = false;
+                            break;
+                        case 'C':;
+                            opt_color = true;
+                            break;
+                        case 'a':;
+                            opt_ascii = true;
+                            break;
+                        case 'A':;
+                            opt_ascii = false;
+                            break;
+                        case 'e':;
+                            opt_extascii = true;
+                            break;
+                        default:;
+                            char tmp[3] = {'-', 0, 0};
+                            tmp[1] = opt;
+                            errno = EINVAL;
+                            aperror(tmp);
+                            return false;
+                            break;
                     }
                 }
             }
