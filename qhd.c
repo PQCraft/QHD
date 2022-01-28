@@ -8,7 +8,7 @@
 /*                                                                   */
 /*-------------------------------------------------------------------*/
 
-const char* VER = "2.3";
+const char* VER = "2.3.1";
 
 #ifndef QHD_ASCII
     #define QHD_ASCII 0 // Enable/disable 7-bit ASCII mode by default
@@ -265,11 +265,9 @@ int main(int _argc, char** _argv) {
     uint8_t retval = 0;
     #define _return(x) {retval = x; goto _ret;}
     if (!readopt()) _return(1);
-    if (opt_startpoint || opt_endpoint) {
-        if (opt_start < 0) opt_start = 0;
-        if (opt_end < 0) opt_end = 0;
-        if (opt_start > opt_end) opt_start = opt_end;
-    }
+    if (opt_startpoint) if (opt_start < 0) opt_start = 0;
+    if (opt_endpoint) if (opt_end < 0) opt_end = 0;
+    if (opt_startpoint && opt_endpoint) {if (opt_start > opt_end) opt_start = opt_end;}
     if (opt_color) {
         colorcodes[COLOR_NORM] = strdup("0");
         colorcodes[COLOR_DIV] = strdup("1");
