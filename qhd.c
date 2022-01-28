@@ -8,7 +8,7 @@
 /*                                                                   */
 /*-------------------------------------------------------------------*/
 
-const char* VER = "2.2.1.1";
+const char* VER = "2.3";
 
 #ifndef QHD_ASCII
     #define QHD_ASCII 0 // Enable/disable 7-bit ASCII mode by default
@@ -36,6 +36,10 @@ bool opt_onlyfile = false;
 bool opt_color = false;
 bool opt_ascii = QHD_ASCII;
 bool opt_extascii = false;
+bool opt_startpoint = false;
+long opt_start = 0;
+bool opt_endpoint = false;
+long opt_end = 0;
 
 void aperror(char* str) {
     fprintf(stderr, "%s: ", argv[0]);
@@ -143,17 +147,20 @@ void puthelp() {
     printf("Quick HexDump version %s\n", VER);
     printf("\nUSAGE: %s [OPTION]... FILE\n", argv[0]);
     puts("\nOPTIONS:");
-    puts("      --help          Display help text and exit");
-    puts("      --version       Display version info and exit");
-    puts("  -b, --bar           Display a column bar");
-    puts("  -l, --emptyline     Display an empty line if the file size is zero");
-    puts("  -p, --hide-pos      Hide the position column");
-    puts("  -h, --hide-hex      Hide the hexadecimal column");
-    puts("  -c, --hide-chr      Hide the character column");
-    puts("  -C, --color         Enable color escape codes");
-    puts("  -a, --ascii         Use only 7-bit ASCII characters");
-    puts("  -A, --ext-char      Use UTF-8 characters");
-    puts("  -e, --ext-ascii     Display extended ASCII in the character panel");
+    puts("      --help              Display help text and exit");
+    puts("      --version           Display version info and exit");
+    puts("  -b, --bar               Display a column bar");
+    puts("  -l, --emptyline         Display an empty line if the file size is zero");
+    puts("  -p, --hide-pos          Hide the position column");
+    puts("  -h, --hide-hex          Hide the hexadecimal column");
+    puts("  -c, --hide-chr          Hide the character column");
+    puts("  -C, --color             Enable color escape codes");
+    puts("  -a, --ascii             Use only 7-bit ASCII characters");
+    puts("  -A, --ext-char          Use UTF-8 characters");
+    puts("  -e, --ext-ascii         Display extended ASCII in the character panel");
+    puts("  -s, --start POS         Start dumping from POS");
+    puts("  -S, --stop POS          Stop dumping at POS");
+    puts("  -L, --length BYTES      Stop dumping at BYTES after the starting point");
     puts("\nENVIRONMENT:");
     puts("    QHD_COLORS: Sets the pallette to use when color escape codes are enabled");
     puts("        Format is key=value separated by colons");
@@ -183,78 +190,66 @@ bool readopt() {
     bool setfile = false;
     for (int i = 1; i < argc; ++i) {
         if (!opt_onlyfile && argv[i][0] == '-' && argv[i][1]) {
-            if (argv[i][1] == '-') {
-                char* opt = argv[i] + 2;
-                if (!*opt) {
-                    opt_onlyfile = true;
-                } else if (!strcmp(opt, "help")) {
-                    puthelp();
-                } else if (!strcmp(opt, "version")) {
-                    putver();
-                } else if (!strcmp(opt, "bar")) {
-                    opt_bar = true;
-                } else if (!strcmp(opt, "emptyline")) {
-                    opt_emptyln = true;
-                } else if (!strcmp(opt, "hide-pos")) {
-                    opt_showpos = false;
-                } else if (!strcmp(opt, "hide-hex")) {
-                    opt_showhex = false;
-                } else if (!strcmp(opt, "hide-chr")) {
-                    opt_showchr = false;
-                } else if (!strcmp(opt, "color")) {
-                    opt_color = true;
-                } else if (!strcmp(opt, "ascii")) {
-                    opt_ascii = true;
-                } else if (!strcmp(opt, "ext-char")) {
-                    opt_ascii = false;
-                } else if (!strcmp(opt, "ext-ascii")) {
-                    opt_extascii = true;
-                } else {
-                    errno = EINVAL;
-                    aperror(argv[i]);
-                    return false;
-                }
+            bool shortopt = !(argv[i][1] == '-');
+            if (!shortopt && !argv[i][2]) {opt_onlyfile = true; continue;}
+            char* opt = argv[i];
+            char sopt = 0;
+            int sopos = 0;
+            soret:;
+            ++sopos;
+            if (shortopt) {
+                if (!(sopt = opt[sopos])) continue;
             } else {
-                char opt = 0;
-                for (int j = 1; (opt = argv[i][j]); ++j) {
-                    switch (opt) {
-                        case 'b':;
-                            opt_bar = true;
-                            break;
-                        case 'l':;
-                            opt_emptyln = true;
-                            break;
-                        case 'p':;
-                            opt_showpos = false;
-                            break;
-                        case 'h':;
-                            opt_showhex = false;
-                            break;
-                        case 'c':;
-                            opt_showchr = false;
-                            break;
-                        case 'C':;
-                            opt_color = true;
-                            break;
-                        case 'a':;
-                            opt_ascii = true;
-                            break;
-                        case 'A':;
-                            opt_ascii = false;
-                            break;
-                        case 'e':;
-                            opt_extascii = true;
-                            break;
-                        default:;
-                            char tmp[3] = {'-', 0, 0};
-                            tmp[1] = opt;
-                            errno = EINVAL;
-                            aperror(tmp);
-                            return false;
-                            break;
-                    }
-                }
+                opt += 2;
             }
+            if (!shortopt && !strcmp(opt, "help")) {
+                puthelp();
+            } else if (!shortopt && !strcmp(opt, "version")) {
+                putver();
+            } else if ((shortopt) ? sopt == 'b' : !strcmp(opt, "bar")) {
+                opt_bar = true;
+            } else if ((shortopt) ? sopt == 'l' : !strcmp(opt, "emptyline")) {
+                opt_emptyln = true;
+            } else if ((shortopt) ? sopt == 'p' : !strcmp(opt, "hide-pos")) {
+                opt_showpos = false;
+            } else if ((shortopt) ? sopt == 'h' : !strcmp(opt, "hide-hex")) {
+                opt_showhex = false;
+            } else if ((shortopt) ? sopt == 'c' : !strcmp(opt, "hide-chr")) {
+                opt_showchr = false;
+            } else if ((shortopt) ? sopt == 'C' : !strcmp(opt, "color")) {
+                opt_color = true;
+            } else if ((shortopt) ? sopt == 'a' : !strcmp(opt, "ascii")) {
+                opt_ascii = true;
+            } else if ((shortopt) ? sopt == 'A' : !strcmp(opt, "ext-char")) {
+                opt_ascii = false;
+            } else if ((shortopt) ? sopt == 'e' : !strcmp(opt, "ext-ascii")) {
+                opt_extascii = true;
+            } else if ((shortopt) ? sopt == 's' : !strcmp(opt, "start")) {
+                ++i;
+                if (i >= argc) {cperror("Expected argument"); return false;}
+                opt_startpoint = true;
+                opt_start = atoi(argv[i]);
+            } else if ((shortopt) ? sopt == 'S' : !strcmp(opt, "stop")) {
+                ++i;
+                if (i >= argc) {cperror("Expected argument"); return false;}
+                opt_endpoint = true;
+                opt_end = atoi(argv[i]);
+            } else if ((shortopt) ? sopt == 'L' : !strcmp(opt, "length")) {
+                ++i;
+                if (i >= argc) {cperror("Expected argument"); return false;}
+                opt_endpoint = true;
+                opt_end = opt_start + atoi(argv[i]);
+            } else {
+                errno = EINVAL;
+                if (shortopt) {
+                    char tmp[3] = {'-', sopt, 0};
+                    aperror(tmp);
+                } else {
+                    aperror(argv[i]);
+                }
+                return false;
+            }
+            if (shortopt) goto soret;
         } else {
             if (setfile) {cperror("File already specified"); return false;}
             fname = argv[i];
@@ -270,6 +265,11 @@ int main(int _argc, char** _argv) {
     uint8_t retval = 0;
     #define _return(x) {retval = x; goto _ret;}
     if (!readopt()) _return(1);
+    if (opt_startpoint || opt_endpoint) {
+        if (opt_start < 0) opt_start = 0;
+        if (opt_end < 0) opt_end = 0;
+        if (opt_start > opt_end) opt_start = opt_end;
+    }
     if (opt_color) {
         colorcodes[COLOR_NORM] = strdup("0");
         colorcodes[COLOR_DIV] = strdup("1");
@@ -307,11 +307,22 @@ int main(int _argc, char** _argv) {
     } else {
         fp = stdin;
     }
+    long offset = 0;
     long pos = 0;
     unsigned char buf[16];
+    if (opt_startpoint) {
+        for (; offset < opt_start; ++offset) {
+            fread(buf, 1, 1, fp);
+        }
+    }
     size_t bread = 0;
     memset(buf, 0, 16);
     while ((bread = fread(buf, 1, 16, fp)) || (opt_emptyln && !pos)) {
+        if (opt_endpoint) {
+            long tmp = opt_end - pos - offset;
+            if (tmp < 16) bread = tmp;
+            if (bread < 1 && !opt_emptyln) break;
+        }
         if (opt_bar && !pos) {
             if (sizeof(long) == 4) {
                 fputs("           ", stdout);
@@ -329,7 +340,7 @@ int main(int _argc, char** _argv) {
         if (opt_showpos) {
             putdiv();
             setcolor(COLOR_POS);
-            printf(posfmt, pos);
+            printf(posfmt, pos + offset);
         }
         if (opt_showhex) {
             putdiv();
@@ -390,6 +401,7 @@ int main(int _argc, char** _argv) {
         pos += 16;
         setcolor(COLOR_NORM);
         putchar('\n');
+        if (bread < 16) break;
     }
     if (fname) fclose(fp);
     _ret:;
