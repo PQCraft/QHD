@@ -8,7 +8,7 @@
 /*                                                                   */
 /*-------------------------------------------------------------------*/
 
-const char* VER = "2.3.1";
+const char* VER = "2.3.2";
 
 #ifndef QHD_ASCII
     #define QHD_ASCII 0 // Enable/disable 7-bit ASCII mode by default
@@ -321,7 +321,7 @@ int main(int _argc, char** _argv) {
             if (tmp < 16) bread = tmp;
             if (bread < 1 && !opt_emptyln) break;
         }
-        if (opt_bar && !pos) {
+        if (opt_bar && opt_showhex && !pos) {
             if (sizeof(long) == 4) {
                 fputs("           ", stdout);
             } else {
@@ -334,7 +334,6 @@ int main(int _argc, char** _argv) {
             setcolor(COLOR_NORM);
             putchar('\n');
         }
-        size_t i = 0;
         if (opt_showpos) {
             putdiv();
             setcolor(COLOR_POS);
@@ -344,6 +343,7 @@ int main(int _argc, char** _argv) {
             putdiv();
             setcolor(COLOR_HEX);
             putchar(' ');
+            size_t i = 0;
             for (; i < bread; ++i) {
                 if (!buf[i] || buf[i] > 0x7F) {
                     if (!buf[i]) {
